@@ -336,5 +336,5 @@ dependencies:
   - pip:
     - torchtext==0.10.0
     - urllib3==1.26.6
-prefix: C:\Users\jjnunez\.conda\envs\scar_nlp
+# prefix: C:\Users\jjnunez\.conda\envs\scar_nlp
 

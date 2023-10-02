@@ -1,0 +1,10 @@
+# Test environment.yaml file
+
+name: care_nlp
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - pandas
