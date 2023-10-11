@@ -1,0 +1,7 @@
+name: care_nlp
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+prefix: /Users/tejasphaterpekar/miniconda3/envs/care_nlp
