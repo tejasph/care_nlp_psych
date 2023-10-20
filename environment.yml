@@ -5,4 +5,5 @@ channels:
 dependencies:
   - python=3.10
   - numpy
-prefix: /Users/kiranphaterpekar/opt/miniconda3/envs/care_nlp
+  - scikit-learn
+prefix: /Users/tejasphaterpekar/miniconda3/envs/care_nlp
