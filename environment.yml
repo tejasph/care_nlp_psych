@@ -4,6 +4,8 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - numpy
-  - scikit-learn
+  - torchvision==0.14.0
+  - torchaudio==0.13.0
+  - pytorch==1.13.0
+  - torchtext=0.14.0
 prefix: /Users/tejasphaterpekar/miniconda3/envs/care_nlp
