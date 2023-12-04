@@ -2,32 +2,33 @@ import os
 import warnings
 
 import pandas as pd
-from datasets.scar import SCAR
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from tqdm import tqdm
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from utils import label_transform
 import _pickle as pickle
 import bz2
 
 
 class SCARBoW:
     def __init__(self, config, eval_only, undersample=False):
-        self.max_tokens = config.max_tokens
+        self.max_tokens = config.max_tokens # Number of features to use in our BoW Model'
         self.use_idf = config.use_idf
-        self.data_dir = os.path.join(config.data_dir, config.target)
+        self.data_dir = os.path.join(config.data_dir, config.target) # target dataset to evaluate the model on
 
         self.vectorizer = None
 
+        # Loading in the dataset
         if eval_only:
             self.data_dir = os.path.join(config.data_dir, config.target)
 
             self.test_file = os.path.join(self.data_dir, f'test_bow_{self.max_tokens}.csv')
 
             if not (os.path.exists(self.test_file)):
-                # If file don't exist, generate anew
+                # If file don't exist, generate a new
                 # Instantiate data frames to store the data
                 self.raw_test_data = pd.DataFrame(columns=['label', 'text', 'vector'])
 
@@ -39,6 +40,7 @@ class SCARBoW:
 
             # Read in data
             self.test_data = pd.read_csv(self.test_file)
+            print(self.test_data.head())
 
         else:
             if undersample:
@@ -91,6 +93,7 @@ class SCARBoW:
         # Save to csv for loading
         self.raw_test_data.to_csv(self.test_file)
 
+    #Create the BoW
     def vectorize_tokens(self):
         # Fit Vectorizer to training data, and then use to transform for dev and test
         self.vectorizer = CountVectorizer(max_features=self.max_tokens,
@@ -112,7 +115,7 @@ class SCARBoW:
         tfidf_transformer_f = os.path.join(self.data_dir, f"transformer_{self.max_tokens}.bz2")
         with bz2.BZ2File(tfidf_transformer_f, 'w') as f:
             pickle.dump(tfidf_transformer, f)
-        self.raw_train_data['vector'] = tfidf_transformer.transform(train_counts).todense().tolist()
+        self.raw_train_data['vector'] = tfidf_transformer.fit_transform(train_counts).todense().tolist()
         self.raw_dev_data['vector'] = tfidf_transformer.transform(dev_counts).todense().tolist()
         self.raw_test_data['vector'] = tfidf_transformer.transform(test_counts).todense().tolist()
 
@@ -122,6 +125,12 @@ class SCARBoW:
         self.raw_test_data.to_csv(self.test_file)
 
     def read_labels_and_tokens(self, split):
+        '''
+        Goes line by line in a target .tsv file, extracting labels and text.
+        The labels are transformed to be binary
+
+        return -- df
+        '''
         filename = os.path.join(self.data_dir, split + '.tsv')
 
         if split == 'train':
@@ -141,7 +150,7 @@ class SCARBoW:
             values = line.split("\t")
             assert len(values) == 2, "Reading a file, we found a line with multiple tabs"
             label, raw_text = values[0], values[1]
-            df.loc[i, 'label'] = SCAR.label_transform(label)
+            df.loc[i, 'label'] = label_transform(label) # transforms label into binary
             df.at[i, 'text'] = raw_text  # Use at so can accept a list
 
             i += 1
