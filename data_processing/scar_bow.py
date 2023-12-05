@@ -21,7 +21,7 @@ class SCARBoW:
 
         self.vectorizer = None
 
-        # Loading in the dataset
+        # Loading in the dataset for evaluation only (ie. test)
         if eval_only:
             self.data_dir = os.path.join(config.data_dir, config.target)
 
@@ -42,6 +42,7 @@ class SCARBoW:
             self.test_data = pd.read_csv(self.test_file)
             print(self.test_data.head())
 
+        # If training must be done (ie train, dev, test)
         else:
             if undersample:
                 self.data_dir = os.path.join(config.data_dir, config.target + "_undersampled")
@@ -76,6 +77,12 @@ class SCARBoW:
             self.test_data = pd.read_csv(self.test_file)
 
     def load_to_vectorize_tokens(self):
+        """
+        Loads in a trained vectorizer and tfidf transformer to apply ot the dataset.
+        Used for evaluation of the test set
+
+        returns nothing, but writes csv file with added vector data
+        """
         # Load vectorizer object for interpretation
         vectorizer_filename = os.path.join(self.data_dir, f"vectorizer_{self.max_tokens}.bz2")
         with bz2.BZ2File(vectorizer_filename, 'r') as f:
@@ -93,8 +100,15 @@ class SCARBoW:
         # Save to csv for loading
         self.raw_test_data.to_csv(self.test_file)
 
-    #Create the BoW
+
     def vectorize_tokens(self):
+        """
+        Creates Vectorizer object and tfidf transformer object.
+        Both are trained on the training set, and then applied
+        to the training, dev, and test sets.
+
+        Returns Nothing, but writes updated files.
+        """
         # Fit Vectorizer to training data, and then use to transform for dev and test
         self.vectorizer = CountVectorizer(max_features=self.max_tokens,
                                      tokenizer=StemTokenizer(),  # Tokenizes, stems, and remove stop words
@@ -125,12 +139,12 @@ class SCARBoW:
         self.raw_test_data.to_csv(self.test_file)
 
     def read_labels_and_tokens(self, split):
-        '''
+        """
         Goes line by line in a target .tsv file, extracting labels and text.
         The labels are transformed to be binary
 
         return -- df
-        '''
+        """
         filename = os.path.join(self.data_dir, split + '.tsv')
 
         if split == 'train':
@@ -180,35 +194,35 @@ class SCARBoW:
 
         return ' '.join(stemmed_text)  # Return as a single string.
 
-    def get_idx_of_token(self, token):
+    # def get_idx_of_token(self, token):
+    #
+    #     if self.vectorizer == None:
+    #         # Load vectorizer object for interpretation
+    #         vectorizer_filename = os.path.join(self.data_dir, f"vectorizer_{self.max_tokens}.bz2")
+    #         with bz2.BZ2File(vectorizer_filename, 'r') as f:
+    #             self.vectorizer = pickle.load(f)
+    #         warnings.warn('Loading an existent vectorizer for applying this rule based method; delete vectorized data'
+    #                       'to vectorize data from scratch.')
+    #
+    #     vocab_dict = self.vectorizer.vocabulary_  # dictionary with the tokens as keys, indeces as items
+    #     return vocab_dict[token]
+    #
+    # def get_train_data(self):
+    #     return self.train_data
+    #
+    # def get_dev_data(self):
+    #     return self.dev_data
+    #
+    # def get_test_data(self):
+    #     return self.test_data
+    #
+    # def get_raw_train_data(self): # This is used for counting tokens in each document
+    #     return self.raw_train_data
 
-        if self.vectorizer == None:
-            # Load vectorizer object for interpretation
-            vectorizer_filename = os.path.join(self.data_dir, f"vectorizer_{self.max_tokens}.bz2")
-            with bz2.BZ2File(vectorizer_filename, 'r') as f:
-                self.vectorizer = pickle.load(f)
-            warnings.warn('Loading an existent vectorizer for applying this rule based method; delete vectorized data'
-                          'to vectorize data from scratch.')
 
-        vocab_dict = self.vectorizer.vocabulary_  # dictionary with the tokens as keys, indeces as items
-        return vocab_dict[token]
-
-    def get_train_data(self):
-        return self.train_data
-
-    def get_dev_data(self):
-        return self.dev_data
-
-    def get_test_data(self):
-        return self.test_data
-
-    def get_raw_train_data(self): # This is used for counting tokens in each document
-        return self.raw_train_data
-
-
-class StemTokenizer:
-    def __init__(self):
-        self.sbs = SnowballStemmer("english", ignore_stopwords=True)
-
-    def __call__(self, doc):
-        return [self.sbs.stem(t) for t in word_tokenize(doc)]
+# class StemTokenizer:
+#     def __init__(self):
+#         self.sbs = SnowballStemmer("english", ignore_stopwords=True)
+#
+#     def __call__(self, doc):
+#         return [self.sbs.stem(t) for t in word_tokenize(doc)]
