@@ -207,22 +207,22 @@ class SCARBoW:
     #     vocab_dict = self.vectorizer.vocabulary_  # dictionary with the tokens as keys, indeces as items
     #     return vocab_dict[token]
     #
-    # def get_train_data(self):
-    #     return self.train_data
-    #
-    # def get_dev_data(self):
-    #     return self.dev_data
-    #
-    # def get_test_data(self):
-    #     return self.test_data
+    def get_train_data(self):
+        return self.train_data
+
+    def get_dev_data(self):
+        return self.dev_data
+
+    def get_test_data(self):
+        return self.test_data
     #
     # def get_raw_train_data(self): # This is used for counting tokens in each document
     #     return self.raw_train_data
 
 
-# class StemTokenizer:
-#     def __init__(self):
-#         self.sbs = SnowballStemmer("english", ignore_stopwords=True)
-#
-#     def __call__(self, doc):
-#         return [self.sbs.stem(t) for t in word_tokenize(doc)]
+class StemTokenizer:
+    def __init__(self):
+        self.sbs = SnowballStemmer("english", ignore_stopwords=True)
+
+    def __call__(self, doc):
+        return [self.sbs.stem(t) for t in word_tokenize(doc)]

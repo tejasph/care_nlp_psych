@@ -7,7 +7,7 @@ from models.bow.args import get_args
 from data_processing.scar_bow import SCARBoW
 # import warnings
 import datetime
-# from tables.generate_token_counts import count_bow_tokens
+from tables.generate_token_counts import count_bow_tokens
 
 if __name__ == '__main__':
     args = get_args() # extracts all relevant variables for BoW training
