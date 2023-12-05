@@ -13,4 +13,6 @@ dependencies:
   - nltk
   - scikit-learn
   - datasets
+  - matplotlib
+  - torchmetrics
 prefix: /Users/tejasphaterpekar/miniconda3/envs/care_nlp
