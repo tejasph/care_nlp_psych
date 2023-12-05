@@ -2,7 +2,7 @@ import os
 import sys
 from copy import deepcopy
 from trainers.bow_trainer import BoWTrainer
-# from evaluators.evaluator import Evaluator
+from evaluators.evaluator import Evaluator
 from models.bow.args import get_args
 from data_processing.scar_bow import SCARBoW
 import warnings
@@ -74,15 +74,15 @@ if __name__ == '__main__':
         test_data = scar_bow.get_test_data()
         train_history, dev_history, test_history, start_time = trainer.fit(train_data, dev_data, test_data,
                                                                                config.epochs)
-    # evaluator = Evaluator("BoW", test_history, config, start_time)
-    #
-    # # Use evaluator to print the best epochs
-    # print('\nBest epoch for AUC:')
-    # evaluator.print_best_auc()
-    #
-    # print('\nBest epoch for F1:')
-    # evaluator.print_best_f1()
-    #
-    # # Write the run history, and update the master results file
-    # evaluator.write_result_history()
-    # evaluator.append_to_results()
+    evaluator = Evaluator("BoW", test_history, config, start_time)
+
+    # Use evaluator to print the best epochs
+    print('\nBest epoch for AUC:')
+    evaluator.print_best_auc()
+
+    print('\nBest epoch for F1:')
+    evaluator.print_best_f1()
+
+    # Write the run history, and update the master results file
+    evaluator.write_result_history()
+    evaluator.append_to_results()
