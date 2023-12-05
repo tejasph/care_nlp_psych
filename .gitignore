@@ -167,5 +167,5 @@ cython_debug/
 
 # Data (for privacy reasons)
 .data/*
-
 .tables/*
+.results/*

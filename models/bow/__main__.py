@@ -5,7 +5,7 @@ from copy import deepcopy
 # from evaluators.evaluator import Evaluator
 from models.bow.args import get_args
 from data_processing.scar_bow import SCARBoW
-# import warnings
+import warnings
 import datetime
 from tables.generate_token_counts import count_bow_tokens
 
@@ -29,38 +29,39 @@ if __name__ == '__main__':
     if eval_only:
         class_weight = None
         scar_bow = SCARBoW(args, eval_only)
-    elif config.count_tokens: # counts tokens instead of training
+    elif config.count_tokens: # counts token/doc instead of training
         scar_bow = SCARBoW(args, False)
         count_bow_tokens(model_name, config, scar_bow)
         sys.exit()
     elif config.imbalance_fix == 'loss_weight':
         class_weight = 'balanced'
 
-        # if config.classifier == "gbdt":
-        #     warnings.warn("sklearn does not have class_weight, so can't use loss_weight to balance"
-        #                   "gbdt, setting to none", stacklevel=2)
-        #     # Set config's imbalance_fix to none for gbdt, so when results are written out, we see
-        #     # that loss weighting wasn't used.
-        #     config_dict = vars(config)
-        #     config_dict['imbalance_fix'] = 'none'
+        if config.classifier == "gbdt":
+            warnings.warn("sklearn does not have class_weight, so can't use loss_weight to balance"
+                          "gbdt, setting to none", stacklevel=2)
+            # Set config's imbalance_fix to none for gbdt, so when results are written out, we see
+            # that loss weighting wasn't used.
+            config_dict = vars(config)
+            config_dict['imbalance_fix'] = 'none'
 
         scar_bow = SCARBoW(args, eval_only)  # args.batch_size, args.data_dir, args.target)
-    # elif args.imbalance_fix == 'undersampling':
-    #     class_weight = None
-    #     scar_bow = SCARBoW(args, eval_only, undersample=True)
+    elif args.imbalance_fix == 'undersampling':
+        class_weight = None
+        scar_bow = SCARBoW(args, eval_only, undersample=True) # creates separate files for undersampling
     elif config.imbalance_fix == 'none':
         class_weight = None
     else:
         raise Exception("Invalid method to fix the class imbalance provided, or not yet implemented")
-    #
-    # # Make directories for results if not already there
-    # config.results_dir_target = os.path.join(config.results_dir, config.target)  # dir for a targets results
-    # config.results_dir_model = os.path.join(config.results_dir_target, model_name)  # subdir for each model
-    #
-    # if not os.path.exists(config.results_dir_target):
-    #     os.mkdir(config.results_dir_target)
-    # if not os.path.exists(config.results_dir_model):
-    #     os.mkdir(config.results_dir_model)
+
+    # Make directories for results if not already there
+    config.results_dir_target = os.path.join(config.results_dir, config.target)  # dir for a targets results
+    config.results_dir_model = os.path.join(config.results_dir_target, model_name)  # subdir for each model
+
+    # Creates necessary directories, as specified
+    if not os.path.exists(config.results_dir_target):
+        os.mkdir(config.results_dir_target)
+    if not os.path.exists(config.results_dir_model):
+        os.mkdir(config.results_dir_model)
     #
     # # Train and Evaluate Model
     # trainer = BoWTrainer(config=config, class_weight=class_weight)
