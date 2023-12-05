@@ -1,7 +1,7 @@
 import os
 import sys
 from copy import deepcopy
-# from trainers.bow_trainer import BoWTrainer
+from trainers.bow_trainer import BoWTrainer
 # from evaluators.evaluator import Evaluator
 from models.bow.args import get_args
 from data_processing.scar_bow import SCARBoW
@@ -62,18 +62,18 @@ if __name__ == '__main__':
         os.mkdir(config.results_dir_target)
     if not os.path.exists(config.results_dir_model):
         os.mkdir(config.results_dir_model)
-    #
-    # # Train and Evaluate Model
-    # trainer = BoWTrainer(config=config, class_weight=class_weight)
-    # if eval_only:
-    #     test_data = scar_bow.get_test_data()
-    #     test_history, start_time = trainer.eval_only(test_data)
-    # else:
-    #     train_data = scar_bow.get_train_data()
-    #     dev_data = scar_bow.get_dev_data()
-    #     test_data = scar_bow.get_test_data()
-    #     train_history, dev_history, test_history, start_time = trainer.fit(train_data, dev_data, test_data,
-    #                                                                            config.epochs)
+
+    # Train and Evaluate Model
+    trainer = BoWTrainer(config=config, class_weight=class_weight)
+    if eval_only:
+        test_data = scar_bow.get_test_data()
+        test_history, start_time = trainer.eval_only(test_data)
+    else:
+        train_data = scar_bow.get_train_data()
+        dev_data = scar_bow.get_dev_data()
+        test_data = scar_bow.get_test_data()
+        train_history, dev_history, test_history, start_time = trainer.fit(train_data, dev_data, test_data,
+                                                                               config.epochs)
     # evaluator = Evaluator("BoW", test_history, config, start_time)
     #
     # # Use evaluator to print the best epochs
