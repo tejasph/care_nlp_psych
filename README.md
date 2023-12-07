@@ -8,7 +8,7 @@ To maintain consistency in the repo, will always update the dependency list if n
 
 If it's your first time loading the .yml , then use `conda env create -f environment.yml`. 
 
-If you add a package, use `conda install ____ --freeze-installed`
+If you add a package, use `conda install <package>`
 
 If you submit a pull request and you added a new package, then update the .yml with `conda env export --from-history > environment.yml`. 
 

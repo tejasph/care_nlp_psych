@@ -60,7 +60,7 @@ class BoWTrainer(object):
         test_x = series_to_matrix(deepcopy(test_data['vector']))
         test_y = deepcopy(test_data['label']).to_numpy()
 
-        self.start = time.time()
+        self.time_start = time.time()
 
         warnings.warn('For our BoW models, epochs are simply re-training and evaluating our models each epoch')
         for epoch in range(n_epochs):
@@ -94,7 +94,7 @@ class BoWTrainer(object):
 
             # Predict using train set
             predicted_labels = np.array(clf.predict_proba(train_x))
-            predicted_labels = np.array([x[1] for x in predicted_labels])  # Get the probability for survival
+            predicted_labels = np.array([x[1] for x in predicted_labels])  # Get the probability for ER presentation
             target_labels = np.array(train_y)
 
             train_loss = 0  # np.mean(train_loss)
@@ -104,27 +104,27 @@ class BoWTrainer(object):
 
             # Evaluate on dev set ----------------------------------------
             predicted_labels = np.array(clf.predict_proba(dev_x))
-            predicted_labels = np.array([x[1] for x in predicted_labels])  # Get the probability for survival
+            predicted_labels = np.array([x[1] for x in predicted_labels])  # Get the probability for ER presentation
             target_labels = np.array(dev_y)
             dev_loss = 0  # np.mean(dev_loss)
             dev_history = add_epoch_perf(target_labels, predicted_labels, dev_loss, dev_history)
 
             # Evaluate on test set ----------------------------------------
             predicted_labels = np.array(clf.predict_proba(test_x))
-            predicted_labels = np.array([x[1] for x in predicted_labels])  # Get the probability for survival
+            predicted_labels = np.array([x[1] for x in predicted_labels])  # Get the probability for ER presentation
             target_labels = np.array(test_y)
             test_loss = 0
             test_history = add_epoch_perf(target_labels, predicted_labels, test_loss, test_history)
 
             # Print Epoch Results so far
-            print_from_history(dev_history, -1, self.start, epoch, n_epochs)
+            print_from_history(dev_history, -1, self.time_start, epoch, n_epochs)
 
             # Save model
             models_filename = os.path.join(self.results_dir_model, self.run_name + f"_e{epoch}") + '.pbz2'
             with bz2.BZ2File(models_filename, 'w') as f2:
                 cPickle.dump(clf, f2)
 
-        return train_history, dev_history, test_history, self.start
+        return train_history, dev_history, test_history, self.time_start
 
     def eval_only(self, test_data):
 

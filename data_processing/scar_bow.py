@@ -2,32 +2,33 @@ import os
 import warnings
 
 import pandas as pd
-from datasets.scar import SCAR
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from tqdm import tqdm
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from utils import label_transform
 import _pickle as pickle
 import bz2
 
 
 class SCARBoW:
     def __init__(self, config, eval_only, undersample=False):
-        self.max_tokens = config.max_tokens
+        self.max_tokens = config.max_tokens # Number of features to use in our BoW Model'
         self.use_idf = config.use_idf
-        self.data_dir = os.path.join(config.data_dir, config.target)
+        self.data_dir = os.path.join(config.data_dir, config.target) # target dataset to evaluate the model on
 
         self.vectorizer = None
 
+        # Loading in the dataset for evaluation only (ie. test)
         if eval_only:
             self.data_dir = os.path.join(config.data_dir, config.target)
 
             self.test_file = os.path.join(self.data_dir, f'test_bow_{self.max_tokens}.csv')
 
             if not (os.path.exists(self.test_file)):
-                # If file don't exist, generate anew
+                # If file don't exist, generate a new
                 # Instantiate data frames to store the data
                 self.raw_test_data = pd.DataFrame(columns=['label', 'text', 'vector'])
 
@@ -39,7 +40,9 @@ class SCARBoW:
 
             # Read in data
             self.test_data = pd.read_csv(self.test_file)
+            print(self.test_data.head())
 
+        # If training must be done (ie train, dev, test)
         else:
             if undersample:
                 self.data_dir = os.path.join(config.data_dir, config.target + "_undersampled")
@@ -74,6 +77,12 @@ class SCARBoW:
             self.test_data = pd.read_csv(self.test_file)
 
     def load_to_vectorize_tokens(self):
+        """
+        Loads in a trained vectorizer and tfidf transformer to apply ot the dataset.
+        Used for evaluation of the test set
+
+        returns nothing, but writes csv file with added vector data
+        """
         # Load vectorizer object for interpretation
         vectorizer_filename = os.path.join(self.data_dir, f"vectorizer_{self.max_tokens}.bz2")
         with bz2.BZ2File(vectorizer_filename, 'r') as f:
@@ -91,7 +100,15 @@ class SCARBoW:
         # Save to csv for loading
         self.raw_test_data.to_csv(self.test_file)
 
+
     def vectorize_tokens(self):
+        """
+        Creates Vectorizer object and tfidf transformer object.
+        Both are trained on the training set, and then applied
+        to the training, dev, and test sets.
+
+        Returns Nothing, but writes updated files.
+        """
         # Fit Vectorizer to training data, and then use to transform for dev and test
         self.vectorizer = CountVectorizer(max_features=self.max_tokens,
                                      tokenizer=StemTokenizer(),  # Tokenizes, stems, and remove stop words
@@ -112,7 +129,7 @@ class SCARBoW:
         tfidf_transformer_f = os.path.join(self.data_dir, f"transformer_{self.max_tokens}.bz2")
         with bz2.BZ2File(tfidf_transformer_f, 'w') as f:
             pickle.dump(tfidf_transformer, f)
-        self.raw_train_data['vector'] = tfidf_transformer.transform(train_counts).todense().tolist()
+        self.raw_train_data['vector'] = tfidf_transformer.fit_transform(train_counts).todense().tolist()
         self.raw_dev_data['vector'] = tfidf_transformer.transform(dev_counts).todense().tolist()
         self.raw_test_data['vector'] = tfidf_transformer.transform(test_counts).todense().tolist()
 
@@ -122,6 +139,12 @@ class SCARBoW:
         self.raw_test_data.to_csv(self.test_file)
 
     def read_labels_and_tokens(self, split):
+        """
+        Goes line by line in a target .tsv file, extracting labels and text.
+        The labels are transformed to be binary
+
+        return -- df
+        """
         filename = os.path.join(self.data_dir, split + '.tsv')
 
         if split == 'train':
@@ -141,7 +164,7 @@ class SCARBoW:
             values = line.split("\t")
             assert len(values) == 2, "Reading a file, we found a line with multiple tabs"
             label, raw_text = values[0], values[1]
-            df.loc[i, 'label'] = SCAR.label_transform(label)
+            df.loc[i, 'label'] = label_transform(label) # transforms label into binary
             df.at[i, 'text'] = raw_text  # Use at so can accept a list
 
             i += 1
@@ -171,19 +194,19 @@ class SCARBoW:
 
         return ' '.join(stemmed_text)  # Return as a single string.
 
-    def get_idx_of_token(self, token):
-
-        if self.vectorizer == None:
-            # Load vectorizer object for interpretation
-            vectorizer_filename = os.path.join(self.data_dir, f"vectorizer_{self.max_tokens}.bz2")
-            with bz2.BZ2File(vectorizer_filename, 'r') as f:
-                self.vectorizer = pickle.load(f)
-            warnings.warn('Loading an existent vectorizer for applying this rule based method; delete vectorized data'
-                          'to vectorize data from scratch.')
-
-        vocab_dict = self.vectorizer.vocabulary_  # dictionary with the tokens as keys, indeces as items
-        return vocab_dict[token]
-
+    # def get_idx_of_token(self, token):
+    #
+    #     if self.vectorizer == None:
+    #         # Load vectorizer object for interpretation
+    #         vectorizer_filename = os.path.join(self.data_dir, f"vectorizer_{self.max_tokens}.bz2")
+    #         with bz2.BZ2File(vectorizer_filename, 'r') as f:
+    #             self.vectorizer = pickle.load(f)
+    #         warnings.warn('Loading an existent vectorizer for applying this rule based method; delete vectorized data'
+    #                       'to vectorize data from scratch.')
+    #
+    #     vocab_dict = self.vectorizer.vocabulary_  # dictionary with the tokens as keys, indeces as items
+    #     return vocab_dict[token]
+    #
     def get_train_data(self):
         return self.train_data
 
@@ -192,9 +215,9 @@ class SCARBoW:
 
     def get_test_data(self):
         return self.test_data
-
-    def get_raw_train_data(self): # This is used for counting tokens in each document
-        return self.raw_train_data
+    #
+    # def get_raw_train_data(self): # This is used for counting tokens in each document
+    #     return self.raw_train_data
 
 
 class StemTokenizer:

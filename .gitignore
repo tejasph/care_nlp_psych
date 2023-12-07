@@ -164,3 +164,8 @@ cython_debug/
 
 # Virtual Documents (Jupyter)
 .virtual_documents
+
+# Data (for privacy reasons)
+.data/*
+.tables/*
+.results/*

@@ -4,13 +4,13 @@ from copy import deepcopy
 from trainers.bow_trainer import BoWTrainer
 from evaluators.evaluator import Evaluator
 from models.bow.args import get_args
-from datasets.scar_bow import SCARBoW
+from data_processing.scar_bow import SCARBoW
 import warnings
 import datetime
 from tables.generate_token_counts import count_bow_tokens
 
 if __name__ == '__main__':
-    args = get_args()
+    args = get_args() # extracts all relevant variables for BoW training
 
     # Setup config
     config = deepcopy(args)
@@ -18,17 +18,18 @@ if __name__ == '__main__':
     start_time = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     config.run_name = model_name + "_" + start_time
 
+    # Loads in the argument collection
     eval_only = args.eval_only
     if eval_only:
         print(f"Loading and evaluating a {model_name} model")
     else:
         print(f"Training and evaluating a {model_name} model")
 
-    # Loss
+    # # Loss
     if eval_only:
         class_weight = None
         scar_bow = SCARBoW(args, eval_only)
-    elif config.count_tokens:
+    elif config.count_tokens: # counts token/doc instead of training
         scar_bow = SCARBoW(args, False)
         count_bow_tokens(model_name, config, scar_bow)
         sys.exit()
@@ -46,7 +47,7 @@ if __name__ == '__main__':
         scar_bow = SCARBoW(args, eval_only)  # args.batch_size, args.data_dir, args.target)
     elif args.imbalance_fix == 'undersampling':
         class_weight = None
-        scar_bow = SCARBoW(args, eval_only, undersample=True)
+        scar_bow = SCARBoW(args, eval_only, undersample=True) # creates separate files for undersampling
     elif config.imbalance_fix == 'none':
         class_weight = None
     else:
@@ -56,6 +57,7 @@ if __name__ == '__main__':
     config.results_dir_target = os.path.join(config.results_dir, config.target)  # dir for a targets results
     config.results_dir_model = os.path.join(config.results_dir_target, model_name)  # subdir for each model
 
+    # Creates necessary directories, as specified
     if not os.path.exists(config.results_dir_target):
         os.mkdir(config.results_dir_target)
     if not os.path.exists(config.results_dir_model):
