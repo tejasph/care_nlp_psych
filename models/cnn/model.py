@@ -63,9 +63,11 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(ks * output_channel, target_classes)
 
         # Send model to device from init
+        print(self.device)
         self.to(self.device)
 
     def forward(self, x):
+        # Initiates word embeddings
         if self.mode == 'rand':
             word_input = self.embed(x)  # (batch, sent_len, embed_dim)
             x = word_input.unsqueeze(1)  # (batch, channel_input, sent_len, embed_dim)

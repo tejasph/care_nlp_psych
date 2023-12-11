@@ -7,4 +7,4 @@
 #python -m models.bow --target "demo" --table "toy_data" --data-dir "./data" --results-dir "results"
 
 # Testing CNN model with toy data
-python -m models.cnn  --target "demo" --data-dir "./data" --results-dir "results"
+python -m models.cnn  --target "demo" --eval_only --data-dir "./data" --results-dir "results"

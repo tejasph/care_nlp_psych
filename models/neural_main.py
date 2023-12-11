@@ -1,6 +1,6 @@
 import os
 # import sys
-# from copy import deepcopy
+from copy import deepcopy
 import torch.nn as nn
 import torch
 # from evaluators.evaluator import Evaluator
@@ -35,7 +35,8 @@ def neural_main(model_name, model_class, model_trainer, args):
         os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
 
     # Set device being used to train and evaluate the model
-    if args.cuda:
+    # if args.cuda:
+    if torch.cuda.is_available():
         args.device = torch.device('cuda:0')
         print("Using a CUDA GPU, woot!")
     else:
@@ -55,36 +56,36 @@ def neural_main(model_name, model_class, model_trainer, args):
         print(pos_weight)
         loss_fn = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight))
         print(loss_fn)
-    # elif args.imbalance_fix == 'none':
-    #     loss_fn = nn.BCEWithLogitsLoss()
-    #     scar = SCAR(args.batch_size, args.data_dir, args.target, eval_only=eval_only)
+    elif args.imbalance_fix == 'none':
+        loss_fn = nn.BCEWithLogitsLoss()
+        scar = SCAR(args.batch_size, args.data_dir, args.target, eval_only=eval_only)
     # elif args.imbalance_fix == 'undersampling':
     #     loss_fn = nn.BCEWithLogitsLoss()
     #     scar = SCAR(args.batch_size, args.data_dir, args.target, eval_only=eval_only, undersample=True)
-    # else:
-    #     raise Exception("Invalid method to fix the class imbalance provided, or not yet implemented")
-    #
-    # # Setup config
-    # config = deepcopy(args)
-    # config.target_classes = scar.NUM_CLASSES
-    # config.vocab_size = scar.get_vocab_size()
-    # config.run_name = model_name + "_" + start_time
-    #
-    # # Make directories for results if not already there
-    # config.results_dir_target = os.path.join(config.results_dir, config.target)  # dir for a targets results
-    # config.results_dir_model = os.path.join(config.results_dir_target, model_name)  # subdir for each model
-    #
-    # if not os.path.exists(config.results_dir_target):
-    #     os.mkdir(config.results_dir_target)
-    # if not os.path.exists(config.results_dir_model):
-    #     os.mkdir(config.results_dir_model)
-    #
-    # # Instantiate our Model
-    # model = model_class(config)
-    #
+    else:
+        raise Exception("Invalid method to fix the class imbalance provided, or not yet implemented")
+
+    # Setup config
+    config = deepcopy(args)
+    config.target_classes = scar.NUM_CLASSES
+    config.vocab_size = scar.get_vocab_size()
+    config.run_name = model_name + "_" + start_time
+
+    # Make directories for results if not already there
+    config.results_dir_target = os.path.join(config.results_dir, config.target)  # dir for a targets results
+    config.results_dir_model = os.path.join(config.results_dir_target, model_name)  # subdir for each model
+
+    if not os.path.exists(config.results_dir_target):
+        os.mkdir(config.results_dir_target)
+    if not os.path.exists(config.results_dir_model):
+        os.mkdir(config.results_dir_model)
+
+    # Instantiate our Model
+    model = model_class(config)
+
     # optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     # trainer = model_trainer(model, optimizer, loss_fn, config, args.imbalance_fix)
-    #
+
     # # Train and Evaluate Model
     # if eval_only:
     #     test_dataloader = scar.test_dataloader()
