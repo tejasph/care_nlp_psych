@@ -4,11 +4,12 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - pytorch==2.1.0
-  - torchvision==0.16.0
-  - torchaudio==2.1.0
+  - pytorch==2.0.0
+  - torchvision==0.15.0
+  - torchaudio==2.0.0
   - python=3.10.0
-  - torchtext==0.16.0
+  - torchtext==0.15.0
+  - torchdata==0.6.0
   - pandas
   - nltk
   - scikit-learn
