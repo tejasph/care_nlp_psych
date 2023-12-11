@@ -53,7 +53,8 @@ def neural_main(model_name, model_class, model_trainer, args):
         print(target_perc)
         pos_weight = (1 - target_perc) / target_perc
         print(pos_weight)
-        # loss_fn = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight))
+        loss_fn = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight))
+        print(loss_fn)
     # elif args.imbalance_fix == 'none':
     #     loss_fn = nn.BCEWithLogitsLoss()
     #     scar = SCAR(args.batch_size, args.data_dir, args.target, eval_only=eval_only)

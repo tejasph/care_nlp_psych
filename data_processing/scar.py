@@ -45,7 +45,22 @@ class SCAR:
                             'test': self.n_test}
 
             # Make iters of the input test text paths
-            self.test_iter = self.create_iter(split='test')
+            # self.test_iter = self.create_iter(split='test')
+            # Make iters of the input text files
+            self.test_dp = self.read_text('test')
+            # Transforms strings by tokenizing, and then converting to indices (based on self.vocab)
+            self.test_dp = self.test_dp.map(self.applyTransform)
+            # Bucket batch data to be of similar sizes (for efficiency purposes, and to minimize padding
+            self.test_dp = self.test_dp.bucketbatch(
+                batch_size=32, batch_num=100, bucket_num=1,
+                use_in_batch_shuffle=False, sort_key=self.sortBucket
+            )
+            # Separate labels from targets
+            self.test_dp = self.test_dp.map(self.separateSourceTarget)
+
+            # Add padding based on each batch size
+            self.test_dp = self.test_dp.map(self.applyPadding)
+
         else:
 
             if undersample:
@@ -97,6 +112,9 @@ class SCAR:
             # If token not recognized as part of the vocab, then set as unknown
             self.vocab.set_default_index(self.vocab['<unk>'])
 
+            # Save vocab model
+            torch.save(self.vocab, os.path.join(self.data_dir, 'scar_neural_vocab.pth'))
+
             # Transforms strings by tokenizing, and then converting to indices (based on self.vocab)
             self.train_dp = self.train_dp.map(self.applyTransform)
             self.dev_dp = self.dev_dp.map(self.applyTransform)
@@ -116,7 +134,7 @@ class SCAR:
                 use_in_batch_shuffle=False, sort_key=self.sortBucket
             )
 
-            ## Separate labels from targets
+            # Separate labels from targets
             self.train_dp = self.train_dp.map(self.separateSourceTarget)
             self.dev_dp = self.dev_dp.map(self.separateSourceTarget)
             self.test_dp = self.test_dp.map(self.separateSourceTarget)
@@ -153,6 +171,21 @@ class SCAR:
     #     our_tokenizer = get_tokenizer('basic_english')
     #     return our_tokenizer(t)
 
+    def read_text(self, split):
+
+        split_path = os.path.join(self.data_dir, split + '.tsv')
+        print(split_path)
+        # Creates iterable of filenames
+        data_pipe = dp.iter.IterableWrapper([split_path])
+
+        # Iterable passed to a file opener
+        data_pipe = dp.iter.FileOpener(data_pipe, mode='rb')
+
+        # Parses file, returns iterable of tupeles representing each row of tsv file
+        data_pipe = data_pipe.parse_csv(skip_lines=0, delimiter='\t', as_tuple=True)
+
+        return data_pipe
+
     def getTokens(self, data_iter):
         """
         Function to yield tokens from an iterator.
@@ -183,6 +216,8 @@ class SCAR:
     def applyTransform(self, data_iter):
         """
         Apply transforms to each example
+        For the labels, we ensure all targets are in binary float form
+        For text, we apply our vocab model
         """
         tokenizer = get_tokenizer('basic_english')
 
@@ -191,7 +226,7 @@ class SCAR:
     def sortBucket(self,bucket):
         """
         Function to sort a given bucket. Here, we want to sort based on the length of
-        each doc.
+        each doc/example.
         """
         return sorted(bucket, key=lambda x: len(x[1]))
 
@@ -205,13 +240,10 @@ class SCAR:
 
     def applyPadding(self, data_iter):
         """
-        Convert sequences to tensors and apply padding
+        Convert sequences to tensors and apply padding.
+        T.ToTensor(3)- creates tensor object and adds padding (3 - index of <pad> in vocab)
         """
-        return (torch.tensor(data_iter[0]), T.ToTensor(3)(list(data_iter[1])))
-
-    ## `T.ToTensor(0)` returns a transform that converts the sequence to `torch.tensor` and also applies
-    # padding. Here, `0` is passed to the constructor to specify the index of the `<pad>` token in the
-    # vocabulary.
+        return torch.tensor(data_iter[0]), T.ToTensor(3)(list(data_iter[1]))
 
     # @staticmethod
     # def target_parse(target_text):
@@ -251,20 +283,7 @@ class SCAR:
     #     iterator = generate_scar_data(split, root.path_dict)
     #     return _RawTextIterableDataset(root.DATASET_NAME, root.n_lines[split], iterator)
 
-    def read_text(self, split):
 
-        split_path = os.path.join(self.data_dir, split + '.tsv')
-        print(split_path)
-        # Creates iterable of filenames
-        data_pipe = dp.iter.IterableWrapper([split_path])
-
-        # Iterable passed to a file opener
-        data_pipe = dp.iter.FileOpener(data_pipe, mode='rb')
-
-        # Parses file, returns iterable of tupeles representing each row of tsv file
-        data_pipe = data_pipe.parse_csv(skip_lines=0, delimiter='\t', as_tuple=True)
-
-        return data_pipe
 
     def collate_batch(self, batch):
         label_list, text_list = [], []
@@ -314,14 +333,14 @@ class SCAR:
 
 
 
-    @classmethod
-    def get_scar_tokens(cls, train_iter):
-        """
-        :param train_iter: SCAR training data iterator returning label and text for each example
-        :return: Generator with each text line tokenized
-        """
-        for label, text in train_iter:
-            yield cls.tokenizer(text)
+    # @classmethod
+    # def get_scar_tokens(cls, train_iter):
+    #     """
+    #     :param train_iter: SCAR training data iterator returning label and text for each example
+    #     :return: Generator with each text line tokenized
+    #     """
+    #     for label, text in train_iter:
+    #         yield cls.tokenizer(text)
 
     @staticmethod
     def label_transform(label):
@@ -346,17 +365,17 @@ class SCAR:
         else:
             raise ValueError("Invalid target provided, current supports '0'/'1' or '10'/'01'")
 
-    def text_transform(self, text):
-        """
-        Text transformer. Currently we do the hedwig preprocessing before any of this which is:
-        string = re.sub(r"[^A-Za-z0-9(),!?\'`]", " ", string)
-        string = re.sub(r"\s{2,}", " ", string)
-
-        So then, all we need to do is convert a patient's text to tokens
-        :param text: text of a patient
-        :return: text after transformation to vocab index position
-        """
-        return [self.vocab['<BOS>']] + [self.vocab[token] for token in self.tokenizer(text)] + [self.vocab['<EOS>']]
+    # def text_transform(self, text):
+    #     """
+    #     Text transformer. Currently we do the hedwig preprocessing before any of this which is:
+    #     string = re.sub(r"[^A-Za-z0-9(),!?\'`]", " ", string)
+    #     string = re.sub(r"\s{2,}", " ", string)
+    #
+    #     So then, all we need to do is convert a patient's text to tokens
+    #     :param text: text of a patient
+    #     :return: text after transformation to vocab index position
+    #     """
+    #     return [self.vocab['<BOS>']] + [self.vocab[token] for token in self.tokenizer(text)] + [self.vocab['<EOS>']]
 
     def get_class_balance(self):
         targets_equal_one = 0
