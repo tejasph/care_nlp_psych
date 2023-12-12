@@ -108,7 +108,8 @@ class SCARBoW:
 
         Returns Nothing, but writes updated files.
         """
-        # Fit Vectorizer to training data, and then use to transform for dev and test
+        # F
+        # d test
         self.vectorizer = CountVectorizer(max_features=self.max_tokens,
                                      tokenizer=StemTokenizer(),  # Tokenizes, stems, and remove stop words
                                      lowercase=True)
