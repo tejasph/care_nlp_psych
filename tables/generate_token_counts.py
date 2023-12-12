@@ -83,6 +83,19 @@ from data_processing.scar_bow import StemTokenizer
 
 
 def count_bow_tokens(model_name, config, scar_bow):
+    """
+    Count the number of tokens in the text of train, dev, and test sets.
+    Generates the count files and summary statistics.
+
+    Parameters:
+    - model_name (str): Name of the model.
+    - config (object): Configuration object containing args.
+    - scar_bow (SCARBoW): Instance of the SCARBoW class.
+
+    Returns:
+    None
+    """
+    # Extract the text data from train, dev, and test sets
     train_data = scar_bow.get_train_data()
     train_text = train_data["text"]
     dev_data = scar_bow.get_dev_data()
@@ -90,31 +103,57 @@ def count_bow_tokens(model_name, config, scar_bow):
     test_data = scar_bow.get_test_data()
     test_text = test_data["text"]
 
+    # Initialize stemmer and calculate the total number of consultations (n_consults)
     stemmer = StemTokenizer()
     n_consults = len(train_text) + len(dev_text) + len(test_text)
     token_counts = []
 
     def count_bow_textset(textset, token_counts_so_far):
+        """
+        Count the number of tokens in a given text set using a stemmer.
+
+        Parameters:
+        - textset (list): List of text data.
+        - token_counts_so_far (list): List to accumulate token counts.
+
+        Returns:
+        list: Updated list of token counts.
+        """
         for i in tqdm(range(len(textset)), desc=f'Counting tokens for {model_name}'):
             stemmed_consult = stemmer(textset[i])
             token_counts_so_far.append(len(stemmed_consult))
 
         return token_counts_so_far
 
+    # Count tokens for train, dev, and test sets
     token_counts = count_bow_textset(train_text, token_counts)
     token_counts = count_bow_textset(dev_text, token_counts)
     token_counts = count_bow_textset(test_text, token_counts)
 
+    # Convert token counts to a numpy array and generate summary stats/histogram
     token_counts = np.array(token_counts)
     generate_count_files(model_name, config, token_counts, n_consults)
 
 
 def generate_count_files(model_name, config, token_counts, n_consults):
+    """
+    Generate count files, summary statistics, and histogram for token counts.
+
+    Parameters:
+    - model_name (str): Name of the model.
+    - config (object): Configuration object containing args.
+    - token_counts (numpy.ndarray): Array containing token counts.
+    - n_consults (int): Total number of consultations.
+
+    Returns:
+    None
+    """
+    # File paths for saving results
     f_stem = f'{model_name}_{config.target}_'
     f_fig = os.path.join(RESULT_TABLES_DIR, f_stem + "n_token.png")
     f_stats = os.path.join(RESULT_TABLES_DIR, f_stem + "n_token.txt")
 
-    # Write some summary statistics
+    # Write summary statistics to a text file
     f_stats = open(f_stats, 'w')
     f_stats.write(f"Summary Statistics for the Token Count when Training "
                   f"Documents are Tokenized using {model_name} Tokenizer \n")
@@ -127,12 +166,11 @@ def generate_count_files(model_name, config, token_counts, n_consults):
     f_stats.write(f'Number <= 512 {n_eql_512}\n')
     f_stats.write(f'Percentage <= 512 {perc_eql_512}\n')
 
-    # Make Histogram
+    # Generate and save histogram plot
     _ = plt.hist(token_counts, bins=30)  # arguments are passed to np.histogram
     plt.axvline(512, color='k', linestyle='dashed', linewidth=1)
     plt.xlabel('Tokens in Document')
     plt.ylabel('Number of Documents')
-    # plt.title("Histogram with 'auto' bins")
     plt.savefig(f_fig)
     plt.close()
     f_stats.close()
