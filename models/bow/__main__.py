@@ -54,7 +54,8 @@ if __name__ == '__main__':
 
     elif config.imbalance_fix == 'none':
         class_weight = None  # No class imbalance handling
-        
+        # Without defining the scar_bow variable here, the code will throw an error within the code chunk @ line 72. 
+        # This only occurs if --imbalance_fix is set to 'none' in the command line
     else:
         raise Exception("Invalid method to fix the class imbalance provided, or not yet implemented")
 
