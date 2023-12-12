@@ -13,19 +13,19 @@ if __name__ == '__main__':
     args = get_args() # extracts all relevant variables for BoW training
 
     # Setup config
-    config = deepcopy(args)
+    config = deepcopy(args) # Copy the configuration to avoid changing the original 'args'
     model_name = "BoW"
     start_time = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     config.run_name = model_name + "_" + start_time
 
-    # Loads in the argument collection
+    # Checks if the 'eval_only' flag is set in the command-line arguments
     eval_only = args.eval_only
-    if eval_only:
+    if eval_only: # Load a model instead of training (no --eval_only command provided)
         print(f"Loading and evaluating a {model_name} model")
     else:
         print(f"Training and evaluating a {model_name} model")
 
-    # # Loss
+    # Loss
     if eval_only:
         class_weight = None
         scar_bow = SCARBoW(args, eval_only)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
             config_dict = vars(config)
             config_dict['imbalance_fix'] = 'none'
 
-        scar_bow = SCARBoW(args, eval_only)  # args.batch_size, args.data_dir, args.target)
+        scar_bow = SCARBoW(args, eval_only)  # args = args.batch_size, args.data_dir, args.target
     elif args.imbalance_fix == 'undersampling':
         class_weight = None
         scar_bow = SCARBoW(args, eval_only, undersample=True) # creates separate files for undersampling
