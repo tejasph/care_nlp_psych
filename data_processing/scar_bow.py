@@ -46,7 +46,6 @@ class SCARBoW:
         else:
             if undersample:
                 self.data_dir = os.path.join(config.data_dir, config.target + "_undersampled")
-                # self.NUM_LINES['train'] = 1815
             else:
                 self.data_dir = os.path.join(config.data_dir, config.target)
 
