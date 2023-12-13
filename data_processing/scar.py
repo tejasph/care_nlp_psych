@@ -221,29 +221,31 @@ class SCAR:
         """
         tokenizer = get_tokenizer('basic_english')
 
-        return self.label_transform(data_iter[0]), self.getTransform(self.vocab)(tokenizer(data_iter[1]))
+        # ([tokens], label)
+        return self.getTransform(self.vocab)(tokenizer(data_iter[1])), self.label_transform(data_iter[0])
 
     def sortBucket(self,bucket):
         """
-        Function to sort a given bucket. Here, we want to sort based on the length of
-        each doc/example.
+        Function to sort a given bucket. Here, we want to sort based on the number
+        of tokens in a doc/example.
         """
-        return sorted(bucket, key=lambda x: len(x[1]))
+        return sorted(bucket, key=lambda x: len(x[0]))
 
     def separateSourceTarget(self,label_text_pairs):
         """
-        input of form: `[(y_1,X_1), (y_2,X_2), (y_3,X_3), (y_4,X_4)]`
-        output of form: `((y_1,y_2,y_3,y_4), (X_1,X_2,X_3,X_4))`
+        input of form: `[(X_1,y_1), (X_2,y_2), (X_3,y_3), (X_4,y_4)]`
+        output of form: `((X_1,X_2,X_3,X_4), (y_1,y_2,y_3,y_4))`
         """
-        labels, text = zip(*label_text_pairs)
-        return labels, text
+        text, labels = zip(*label_text_pairs)
+        return text, labels
 
     def applyPadding(self, data_iter):
         """
         Convert sequences to tensors and apply padding.
         T.ToTensor(3)- creates tensor object and adds padding (3 - index of <pad> in vocab)
         """
-        return torch.tensor(data_iter[0]), T.ToTensor(3)(list(data_iter[1]))
+        # (Tensor batch representation of tokens, tensor of labels for the batch)
+        return T.ToTensor(3)(list(data_iter[0])), torch.tensor(data_iter[1]),
 
     # @staticmethod
     # def target_parse(target_text):
@@ -381,7 +383,7 @@ class SCAR:
         targets_equal_one = 0
         targets_total = 0
 
-        for targets, _ in self.train_dataloader():
+        for _, targets in self.train_dataloader():
             targets = targets.view(-1, 1).float()
             targets_total += len(targets.cpu().detach().numpy())
             targets_equal_one += targets.cpu().detach().numpy().sum()
