@@ -70,7 +70,9 @@ class CNN(nn.Module):
         # Initiates word embeddings
         if self.mode == 'rand':
             word_input = self.embed(x)  # (batch, sent_len, embed_dim)
+            print(f"Word output shape: {word_input.shape} ") # test
             x = word_input.unsqueeze(1)  # (batch, channel_input, sent_len, embed_dim)
+            print(f"Unsqueezed word_input shape: {x.shape}") # temp
         elif self.mode == 'static':
             static_input = self.static_embed(x)
             x = static_input.unsqueeze(1)  # (batch, channel_input, sent_len, embed_dim)

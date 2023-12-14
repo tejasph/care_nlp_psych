@@ -83,26 +83,35 @@ def neural_main(model_name, model_class, model_trainer, args):
     # Instantiate our Model
     model = model_class(config)
 
-    # optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
-    # trainer = model_trainer(model, optimizer, loss_fn, config, args.imbalance_fix)
 
-    # # Train and Evaluate Model
-    # if eval_only:
-    #     test_dataloader = scar.test_dataloader()
-    #     test_history, start = trainer.eval_only(model_class, test_dataloader)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+    # args could probably be changed to config
+    trainer = model_trainer(model, optimizer, loss_fn, config, args.imbalance_fix)
+
+    # Train and Evaluate Model
+    if eval_only:
+        test_dataloader = scar.test_dataloader()
+        test_history, start = trainer.eval_only(model_class, test_dataloader)
     # elif config.count_tokens: # If we're just running this to count tokens in our documents, exit this script and call relevant script
     #     train_dataloader = scar.train_dataloader()
     #     dev_dataloader = scar.dev_dataloader()
     #     test_dataloader = scar.test_dataloader()
     #     count_neural_tokens(model_name, config, train_dataloader, dev_dataloader, test_dataloader)
     #     sys.exit()
-    # else:
-    #     train_dataloader = scar.train_dataloader()
-    #     dev_dataloader = scar.dev_dataloader()
-    #     test_dataloader = scar.test_dataloader()
-    #     train_history, dev_history, test_history, start_time = trainer.fit(train_dataloader,
-    #                                                                        dev_dataloader,
-    #                                                                        test_dataloader)
+    else:
+        # Load data using Pytorch DataLoader object
+        train_dataloader = scar.train_dataloader()
+        dev_dataloader = scar.dev_dataloader()
+        test_dataloader = scar.test_dataloader()
+
+        train_features, train_labels = next(iter(train_dataloader)) # for testing purposes
+        print(train_features)
+        print(train_features.shape)
+        print(train_labels)
+        print(train_labels.shape)
+        train_history, dev_history, test_history, start_time = trainer.fit(train_dataloader,
+                                                                           dev_dataloader,
+                                                                           test_dataloader)
     # evaluator = Evaluator(model_name, test_history, config, start_time)
     #
     # # Write the run history, and update the master results file

@@ -66,7 +66,6 @@ class NeuralTrainer(object):
                 targets = targets.view(-1, 1).float()
                 # have added a squeeze(1) to try and correct dims, seems to be working for now
                 inputs = torch.transpose(inputs, 0, 1).squeeze(1)
-                print(f"targets: {targets} with shape {targets.shape}") # testing
                 print(f"Input: {inputs} with shape {inputs.shape}") # testing
 
 
@@ -80,6 +79,9 @@ class NeuralTrainer(object):
 
                 # forward pass
                 outputs = self.model(inputs)
+                print(f"Outputs: {outputs.shape}") # temp
+                print(f"targets:  {targets.shape}")  # temp
+                print(outputs)
                 train_loss = self.loss_fn(outputs, targets)
                 sys.exit()
 
