@@ -83,10 +83,11 @@ class NeuralTrainer(object):
                 print(f"targets:  {targets.shape}")  # temp
                 print(outputs)
                 train_loss = self.loss_fn(outputs, targets)
-                sys.exit()
+
 
                 # Instead, keep track of predictions and labels so can do full metrics
                 predictions = torch.sigmoid(outputs)
+                print(predictions)
                 predicted_labels = torch.cat((predicted_labels, predictions))
                 target_labels = torch.cat((target_labels, targets.int()))
 
@@ -94,11 +95,15 @@ class NeuralTrainer(object):
                 train_loss.backward()
                 self.optimizer.step()
 
+
                 # Store loss
                 train_loss_tensor = torch.tensor([train_loss.item()], device=self.device)
                 train_losses = torch.cat((train_losses, train_loss_tensor))
 
+            print(f"train losses: {train_losses.shape}") # temp
             mean_train_losses = torch.mean(train_losses)
+            print(f"Mean {mean_train_losses}")
+            sys.exit() # Debug stopper
 
             # Evaluate performance on training set and update
             train_history = add_epoch_perf(target_labels, predicted_labels, mean_train_losses, train_history)
