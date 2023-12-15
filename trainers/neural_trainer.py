@@ -104,7 +104,6 @@ class NeuralTrainer(object):
             mean_train_losses = torch.mean(train_losses)
             print(f"Mean {mean_train_losses}")
 
-
             # Evaluate performance on training set and update
             train_history = add_epoch_perf(target_labels, predicted_labels, mean_train_losses, train_history)
             print(train_history)
