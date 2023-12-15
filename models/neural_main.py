@@ -3,7 +3,7 @@ import os
 from copy import deepcopy
 import torch.nn as nn
 import torch
-# from evaluators.evaluator import Evaluator
+from evaluators.evaluator import Evaluator
 from data_processing.scar import SCAR
 import datetime
 
@@ -112,8 +112,8 @@ def neural_main(model_name, model_class, model_trainer, args):
         train_history, dev_history, test_history, start_time = trainer.fit(train_dataloader,
                                                                            dev_dataloader,
                                                                            test_dataloader)
-    # evaluator = Evaluator(model_name, test_history, config, start_time)
-    #
-    # # Write the run history, and update the master results file
-    # evaluator.write_result_history()
-    # evaluator.append_to_results()
+    evaluator = Evaluator(model_name, test_history, config, start_time)
+
+    # Write the run history, and update the master results file
+    evaluator.write_result_history()
+    evaluator.append_to_results()

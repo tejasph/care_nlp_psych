@@ -103,10 +103,11 @@ class NeuralTrainer(object):
             print(f"train losses: {train_losses.shape}") # temp
             mean_train_losses = torch.mean(train_losses)
             print(f"Mean {mean_train_losses}")
-            sys.exit() # Debug stopper
+
 
             # Evaluate performance on training set and update
             train_history = add_epoch_perf(target_labels, predicted_labels, mean_train_losses, train_history)
+            print(train_history)
 
             # Evaluate on dev set ----------------------------------------
             self.model.eval()
@@ -117,7 +118,9 @@ class NeuralTrainer(object):
 
                 for inputs, targets in dev_loader:
                     targets = targets.view(-1, 1).float()
-                    inputs = torch.transpose(inputs, 0, 1)
+                    inputs = torch.transpose(inputs, 0, 1).squeeze(1) # added squeeze (1)
+                    print(inputs.shape)
+
                     # Move data to GPU
                     dev_inputs, dev_targets = inputs.to(self.device), targets.to(self.device)
 
@@ -138,6 +141,7 @@ class NeuralTrainer(object):
                 mean_dev_losses = torch.mean(dev_losses)
                 dev_history = add_epoch_perf(dev_target_labels, dev_predicted_labels, mean_dev_losses, dev_history)
                 epoch_monitor_metric = dev_history.loc[dev_history.index[-1], self.monitor_metric]
+                print(f"Epoch monitor metric: {epoch_monitor_metric}") # temp
 
                 # Print Epoch Results so far
                 print_from_history(dev_history, -1, self.start, epoch, self.n_epochs)
@@ -157,6 +161,7 @@ class NeuralTrainer(object):
                     if self.iters_not_improved >= self.patience:
                         self.early_stop = True
                         print("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_moniter_metric))
+
                         break
 
         # New addition. When using undersampling, sometimes models don't train per eval on dev set. In this case,
@@ -177,7 +182,7 @@ class NeuralTrainer(object):
 
             for inputs, targets in test_loader:
                 targets = targets.view(-1, 1).float()
-                inputs = torch.transpose(inputs, 0, 1)
+                inputs = torch.transpose(inputs, 0, 1).squeeze(1) #added squeeze (1) for compatibility
                 # Move data to GPU
                 test_inputs, test_targets = inputs.to(self.device), targets.to(self.device)
 
