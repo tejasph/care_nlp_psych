@@ -7,4 +7,4 @@
 #python -m models.bow --target "demo" --table "toy_data" --data-dir "./data" --results-dir "results"
 
 # Testing CNN model with toy data
-python -m models.cnn  --target "demo" --eval_only --data-dir "./data" --results-dir "results"
+python -m models.cnn  --target "demo" --eval_only --model-file "/Users/tejasphaterpekar/Documents/Data-Projects/cancer_nlp/care_nlp_psych/results/demo/CNN/CNN_20231214-1656.pt" --data-dir "./data" --results-dir "results"
