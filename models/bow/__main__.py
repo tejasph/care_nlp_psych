@@ -10,53 +10,61 @@ import datetime
 from tables.generate_token_counts import count_bow_tokens
 
 if __name__ == '__main__':
-    args = get_args() # extracts all relevant variables for BoW training
 
-    # Setup config
-    config = deepcopy(args) # Copy the configuration to avoid changing the original 'args'
+    # extracts all relevant variables for BoW training
+    args = get_args() 
+
+    # Copy the configuration to avoid changing the original 'args'
+    config = deepcopy(args) 
+
+    # This code sets up the configuration, model name, and run name based on the current date and time.
     model_name = "BoW"
     start_time = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     config.run_name = model_name + "_" + start_time
 
     # Checks if the 'eval_only' flag is set in the command-line arguments
+    # If 'eval_only' is True, loads a pre-trained model for evaluation; otherwise, trains and evaluates a new model
     eval_only = args.eval_only
-    if eval_only: # Load a model instead of training (no --eval_only command provided)
+    if eval_only: 
         print(f"Loading and evaluating a {model_name} model")
     else:
         print(f"Training and evaluating a {model_name} model")
     
-    # This if/elif chunk deals with class imbalances
-    if eval_only:  # Using a pre-trained model rather than training a new model
+    # Handling class imbalances
+    # If evaluating only, loads a pre-trained model; otherwise, initializes a new model for training and evaluation
+    if eval_only:  
         class_weight = None
         scar_bow = SCARBoW(args, eval_only)
 
-    elif config.count_tokens:  # Counts token/doc instead of training
+    # Counts tokens in documents without training a model
+    elif config.count_tokens:
         scar_bow = SCARBoW(args, False)
         count_bow_tokens(model_name, config, scar_bow)
-        sys.exit()  # Exit the script after counting tokens
+        sys.exit()  
 
+    # Handles class imbalance using loss weighting
     elif config.imbalance_fix == 'loss_weight':
         class_weight = 'balanced'
         
-        # Gbdt does not use class_weight
+        # GBDT doesn't support class_weight, sets imbalance_fix to none so when results are written out, we see
+        # that loss weighting wasn't used.
         if config.classifier == "gbdt":
             warnings.warn("sklearn does not have class_weight, so can't use loss_weight to balance"
                         " gbdt, setting to none", stacklevel=2)
             config_dict = vars(config)
-            config_dict['imbalance_fix'] = 'none'  # Set config's imbalance_fix to none for gbdt, so when results are written out, we see
-                                                # that loss weighting wasn't used.
+            config_dict['imbalance_fix'] = 'none'
         
         scar_bow = SCARBoW(args, eval_only)  # SCARBow args: args.batch_size, args.data_dir, args.target
-
+    
+    # Handles class imbalance using undersampling
     elif args.imbalance_fix == 'undersampling':
         class_weight = None
-        scar_bow = SCARBoW(args, eval_only, undersample=True)  # Creates separate files for undersampling
+        # Creates separate files for undersampling
+        scar_bow = SCARBoW(args, eval_only, undersample=True)
 
     elif config.imbalance_fix == 'none':
-        class_weight = None  # No class imbalance handling
-        # Without defining the scar_bow variable here, the code will throw an error within the code chunk @ line 72. 
-        # This only occurs if --imbalance_fix is set to 'none' in the command line
-        scar_bow = SCARBoW(args, eval_only) # this is probably sufficient to fix the bug described above
+        class_weight = None
+        scar_bow = SCARBoW(args, eval_only) 
     else:
         raise Exception("Invalid method to fix the class imbalance provided, or not yet implemented")
 
