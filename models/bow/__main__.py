@@ -70,8 +70,9 @@ if __name__ == '__main__':
 
 
     # Make directories for results if not already there
-    config.results_dir_target = os.path.join(config.results_dir, config.target)  # dir for a targets results
-    config.results_dir_model = os.path.join(config.results_dir_target, model_name)  # subdir for each model
+    # results_dir_target = dir for targets results; results_dir_model = subdir for each model
+    config.results_dir_target = os.path.join(config.results_dir, config.target)
+    config.results_dir_model = os.path.join(config.results_dir_target, model_name)  
 
     # Creates necessary directories, as specified
     if not os.path.exists(config.results_dir_target):
