@@ -46,7 +46,6 @@ class SCARBoW:
         else:
             if undersample:
                 self.data_dir = os.path.join(config.data_dir, config.target + "_undersampled")
-                # self.NUM_LINES['train'] = 1815
             else:
                 self.data_dir = os.path.join(config.data_dir, config.target)
 
@@ -110,6 +109,7 @@ class SCARBoW:
         Returns Nothing, but writes updated files.
         """
         # Fit Vectorizer to training data, and then use to transform for dev and test
+        # d test
         self.vectorizer = CountVectorizer(max_features=self.max_tokens,
                                      tokenizer=StemTokenizer(),  # Tokenizes, stems, and remove stop words
                                      lowercase=True)
